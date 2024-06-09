@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { SearchResponse, Gif } from '../interfaces/gifs.interfaces';
 
 // se usa un Injectable asociado a root para que este disponible el
 // servicio para todos los componentes, esto viene por defecto en
@@ -7,15 +8,19 @@ import { Injectable } from '@angular/core';
 @Injectable({
   providedIn: 'root',
 })
-export class GifsService {
+export default class GifsService {
   // definimos las variables, en el caso de tagsHistory se designa como
   // privado para evitar que alguien lo pueda modificar fuera de este
   // servicio
+  public gifList: Gif[] = [];
   private _tagsHistory: string[] = [];
   private apiKey: string = 'dqOlAPxthQVhRPB4WIpA5O79UUmE27ml';
   private serviceUrl: string = 'https://api.giphy.com/v1/gifs';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.loadLocalStorage();
+    console.log('Gifs Service Ready');
+  }
 
   // CODIGO PARA DEVOLVER INFORMACION AL SIDEBAR
   // el get se utiliza para acceder a los datos almacenados en _tagsHistory
@@ -42,19 +47,16 @@ export class GifsService {
     // se agregan unos console log de control
     console.log('Making HTTP request with params:', params.toString());
     //prettier-ignore
-    this.http.get(`${this.serviceUrl}/search`, { params }).subscribe({
-      next: (resp) => {
-        console.log('HTTP response received:', resp);
-      },
-      error: (err) => {
-        console.error('HTTP request error:', err);
-      },
-      complete: () => {
-        console.log('HTTP request complete');
-      },
-    });
+    // se especifica la interface que va a devolver el get y la query
+    this.http.get<SearchResponse>(`${this.serviceUrl}/search`, { params }).subscribe(
+      resp => {
+        // obtenemos los valores de la respuesta
+        this.gifList = resp.data
+      }
+    );
   }
 
+  // CODIGO PARA ORGANIZAR LAS TAGS EN EL SIDEBAR
   private organizeHistory(tag: string) {
     // pasamos la busqueda a minusculas porque Javascript es case sensitive
     tag = tag.toLowerCase();
@@ -68,5 +70,23 @@ export class GifsService {
     this._tagsHistory.unshift(tag);
     // limita la cantidad de tags a 10
     this._tagsHistory = this._tagsHistory.splice(0, 10);
+    this.saveLocalStorage();
+  }
+
+  // CODIGO PARA GUARDAR EN EL ALMACENAMIENTO LOCAL
+  private saveLocalStorage(): void {
+    // convierte a JSON las tagHistory para guardarla en el LocalStorage
+    // donde 'history' es el nombre de la clave que va a usar el LocalStorage
+    // para guardar la informacion
+    localStorage.setItem('history', JSON.stringify(this._tagsHistory));
+  }
+
+  // CODIGO PARA LEER DESDE EL ALMACENAMIENTO LOCAL
+  private loadLocalStorage(): void {
+    if (!localStorage.getItem('history')) return;
+    this._tagsHistory = JSON.parse(localStorage.getItem('history')!);
+
+    if (this._tagsHistory.length === 0) return;
+    this.searchTag(this._tagsHistory[0]);
   }
 }

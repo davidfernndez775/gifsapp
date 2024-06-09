@@ -1,5 +1,5 @@
-import { GifsService } from '../../../gifs/services/GifsService';
 import { Component } from '@angular/core';
+import GifsService from '../../../gifs/services/gifs.service';
 
 @Component({
   selector: 'shared-sidebar',
@@ -11,7 +11,11 @@ export class SidebarComponent {
 
   // usamos un getter para obtener los valores desde el servicio
   // y guardarlos en la variable tags
-  get tags() {
+  get tags(): string[] {
     return this.gifsService.tagsHistory;
+  }
+
+  searchTag(tag: string) {
+    this.gifsService.searchTag(tag);
   }
 }

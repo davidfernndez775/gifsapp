@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { GifsService } from './GifsService';
+import GifsService from './gifs.service';
 
 describe('GifsService', () => {
   let service: GifsService;
